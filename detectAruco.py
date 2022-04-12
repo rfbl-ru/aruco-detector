@@ -32,14 +32,13 @@ MARKER_EDGE = 0.05
 
 buffer = 64
 
-# ac.redLower = (170, 106, 70)
-# ac.redUpper = (185, 255, 255)
-
 pts = deque(maxlen=buffer)
 
 
 def sendMarkers(topic, msg):
-	client.publish(topic, json.dumps(msg))
+	#publish.single(topic, json.dumps(msg), hostname=hostName, auth={'username' : mqtt_login, 'password': mqtt_pwd})
+  client.publish(topic, json.dumps(msg))
+
 
 def angles_from_rvec(rvec):
     r_mat, _jacobian = cv2.Rodrigues(rvec)
@@ -47,6 +46,7 @@ def angles_from_rvec(rvec):
     b = math.atan2(-r_mat[2][0], math.sqrt(math.pow(r_mat[2][1],2) + math.pow(r_mat[2][2],2)))
     c = math.atan2(r_mat[1][0], r_mat[0][0])
     return [a,b,c]
+
 
 def calc_heading(rvec):
     angles = angles_from_rvec(rvec)
@@ -56,8 +56,6 @@ def calc_heading(rvec):
     return degree_angle
 
 
-
-
 def find_markers(frame, show=False):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -65,50 +63,53 @@ def find_markers(frame, show=False):
     if show:
     	cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(corners, MARKER_EDGE, ac.CAMERA_MATRIX, ac.DIST_COEFFS)
+    # rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(corners, MARKER_EDGE, ac.CAMERA_MATRIX, ac.DIST_COEFFS)
     return corners, ids
 
-def find_ball(frame, show=False):
-	blurred = cv2.GaussianBlur(frame, (11, 11), 0)
-	hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-	mask = cv2.inRange(hsv, ac.redLower, ac.redUpper)
-	mask = cv2.erode(mask, None, iterations=2)
-	mask = cv2.dilate(mask, None, iterations=2)
+kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT,(6, 6)) 
+kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 
-	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)
-	cnts = imutils.grab_contours(cnts)
-	center = None
-
-	if len(cnts) > 0:
-		c = max(cnts, key=cv2.contourArea)
-		((x, y), radius) = cv2.minEnclosingCircle(c)
-		M = cv2.moments(c)
-		center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-		if radius > 0 and show:
-			cv2.circle(frame, (int(x), int(y)), int(radius),
-				(0, 255, 255), 2)
-			cv2.circle(frame, center, 5, (0, 0, 255), -1)
-
-	if show:
-		pts.appendleft(center)
-		for i in range(1, len(pts)):
-			if pts[i - 1] is None or pts[i] is None:
-				continue
-			thickness = int(np.sqrt(buffer / float(i + 1)) * 2.5)
-			cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-	if center != None:
-		return x, y
+def find_ball(frame, corners, show=False):
+	global kernel_close, kernel_open
+	blank_image = np.zeros((ac.height,ac.width,1), np.uint8)
+	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	dst = cv2.morphologyEx(cv2.Canny(gray, 100, 100), cv2.MORPH_CLOSE, kernel_close)
+	dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel_open)
+	blank_image[dst > 0.05 * dst.max()] = 255
+	# mask = cv2.medianBlur(blank_image, 3)
+	mask = blank_image
+	rows = mask.shape[0]
+	if len(corners) > 0:
+		for i in range(len(corners)):
+			pts = np.array([[
+				[corners[i][0][0][0], corners[i][0][0][1]],
+				[corners[i][0][1][0], corners[i][0][1][1]],
+				[corners[i][0][2][0], corners[i][0][2][1]],
+				[corners[i][0][3][0], corners[i][0][3][1]],
+				]], np.int32)
+			cv2.fillPoly(mask, [pts], (0, 0, 0))
+	circles = None
+	circles = cv2.HoughCircles(mask.copy(), cv2.HOUGH_GRADIENT, 1, rows/8, param1=50, param2=7, minRadius=4, maxRadius=15)
+	# cv2.imshow("mask", mask)
+	if circles is not None:
+		circles = np.uint16(np.around(circles))
+		for circle in circles[0, :]:
+			if show:
+				cv2.circle(frame, (circle[0], circle[1]), 1, (0, 100, 100), 3)
+				cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 255), 3)
+				
+			return (circle[0], circle[1])
 		
-	else:
-		return -1, -1
+	return (-1, -1)	
+
 
 def capture():
 
 	os.system(cmd)
 
 	if ac.showFrame:
+		print("Show")
 		cv2.namedWindow("input")
 	cap = cv2.VideoCapture(0)
 	cap.set(cv2.CAP_PROP_FPS, ac.framerate)
@@ -128,11 +129,9 @@ def capture():
 		time1 = 0
 		time2 = 0
 		while True:
-			time1 = time.time()
 			frame_num += 1
 			ret, img = cap.read()
-			time2 = time.time()
-			corners, ids = find_markers(img, ac.showFrame)
+			corners, ids = find_markers(img.copy(), ac.showFrame)
 			jsonMarkers = """{
 			"markers":[""" + "{},"*(len(corners)-1) + "{}" + """]
 		}"""
@@ -151,16 +150,15 @@ def capture():
 									'4':{'x':float(corners[i][0][3][0]),'y':float(corners[i][0][3][1])}
 								}}
 			sendMarkers(ac.topicRoot + ac.camId, markers)
-			x, y = find_ball(img, ac.showFrame)
-			
-			if x != -1 and y != -1:
-				ballData = {'ball':{'cam-id': ac.camId, 'center': {'x':float(x),'y':float(y)}}}
-			else: 
-				ballData = {'ball':'None'}
-			sendMarkers(ac.topicBall + ac.camId, ballData)
+			center = find_ball(img, corners, ac.showFrame)
+			if center[0] != -1:
+				ball = {'ball':{'cam-id': ac.camId, 'center': {'x':float(center[0]),'y':float(center[1])}}}
+			else:
+				ball = {'ball':'None'}
+			sendMarkers(ac.topicBall + ac.camId, ball)
 			if ac.showFrame:
 				cv2.imshow("input", img)
-			key = cv2.waitKey(10)
+			key = cv2.waitKey(1)
 			if key == 27:
 				break
 
