@@ -1,12 +1,10 @@
-import asyncio
+# -*- coding: utf-8 -*-
+
 import cv2
-import concurrent
 import logging
 import math
 import time
-from imutils.video import FPS
 import numpy as np
-import imutils
 import paho.mqtt.client as paho
 import json
 from collections import deque
