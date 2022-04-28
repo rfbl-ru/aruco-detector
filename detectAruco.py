@@ -295,14 +295,14 @@ def capture():
                                                                'y': float(corners[i][0][3][1])}
                                                          }}
             sendMarkers(ac.topicRoot + ac.camId, markers)
-            # balls = find_ball(img, corners, imgBig, ac.showFrame)
-            # if len(balls) > 0:
-            #     ball = {'camId': ac.camId, 'ball': []}
-            #     for b in balls:
-            #         ball['ball'].append({'center': {'x': float(b[0]), 'y': float(b[1])}})
-            # else:
-            #     ball = {'camId': ac.camId, 'ball': 'None'}
-            # sendMarkers(ac.topicBall + ac.camId, ball)
+            balls = find_ball(img, corners, imgBig, ac.showFrame)
+            if len(balls) > 0:
+                ball = {'camId': ac.camId, 'ball': []}
+                for b in balls:
+                    ball['ball'].append({'center': {'x': float(b[0]), 'y': float(b[1])}})
+            else:
+                ball = {'camId': ac.camId, 'ball': 'None'}
+            sendMarkers(ac.topicBall + ac.camId, ball)
             if ac.showFrame:
                 cv2.imshow("input", img)
             if frame_num % 12 == 0:
