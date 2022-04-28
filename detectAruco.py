@@ -63,7 +63,6 @@ dist_line_less = lambda x1, y1, x2, y2, x0, y0, d: abs((y2 - y1) * x0 - (x2 - x1
 
 
 def sendMarkers(topic, msg):
-    # publish.single(topic, json.dumps(msg), hostname=hostName, auth={'username' : mqtt_login, 'password': mqtt_pwd})
     client.publish(topic, json.dumps(msg))
 
 
@@ -90,8 +89,6 @@ def find_markers(frame, show=False):
     if show:
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    # rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(corners, MARKER_EDGE, ac.CAMERA_MATRIX,
-    # ac.DIST_COEFFS)
     return corners, ids
 
 
@@ -106,7 +103,6 @@ def find_ball(frame, corners, imgBig, show=False):
     dst = cv2.morphologyEx(cv2.Canny(gray, 100, 100), cv2.MORPH_CLOSE, kernel_close)
     dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel_open)
     blank_image[dst > 0.05 * dst.max()] = 255
-    # mask = cv2.medianBlur(blank_image, 3)
     mask = blank_image
     rows = mask.shape[0]
     if len(corners) > 0:
@@ -121,18 +117,14 @@ def find_ball(frame, corners, imgBig, show=False):
     circles = None
     circles = cv2.HoughCircles(mask.copy(), cv2.HOUGH_GRADIENT, 1, rows / 8, param1=50, param2=7, minRadius=2,
                                maxRadius=15)
-    cv2.imshow("mask", mask)
-    scaleRatio = 1280 // ac.width
+    # cv2.imshow("mask", mask)
     if circles is not None:
         circles = np.uint16(np.around(circles))
-        i_ = 0
         for circle in circles[0, :]:
             if show:
                 cv2.circle(frame, (circle[0], circle[1]), 1, (0, 100, 100), 3)
                 cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 255), 3)
-        # return circle
         return circles[0, :]
-    # print(circles)
 
     return ()
 
