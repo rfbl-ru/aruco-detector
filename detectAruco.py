@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import cv2
 import logging
 import math
@@ -13,8 +11,8 @@ import os
 
 import arucoConfig as ac
 
-
-cmd = "v4l2-ctl --set-ctrl=auto_exposure={0} --set-ctrl=exposure_time_absolute={1} --set-ctrl=brightness={2} --set-ctrl=iso_sensitivity=1"
+cmd = "v4l2-ctl --set-ctrl=auto_exposure={0} --set-ctrl=exposure_time_absolute={1} --set-ctrl=brightness={2} " \
+      "--set-ctrl=iso_sensitivity=1 "
 cmd = cmd.format(ac.autoExposure, ac.exposureTime, ac.brightness)
 print(cmd)
 
@@ -27,14 +25,12 @@ client.connect(host=ac.hostName)
 
 DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
 
-PARAMETERS =  cv2.aruco.DetectorParameters_create()
+PARAMETERS = cv2.aruco.DetectorParameters_create()
 MARKER_EDGE = 0.05
-
 
 buffer = 64
 
 pts = deque(maxlen=buffer)
-
 
 # Canny Edge Detection
 kernel = np.array((
@@ -52,7 +48,6 @@ kernelEr[2][2] = 0
 
 image_number = 0
 
-
 delta = 4
 delta1 = 7
 delta_mouse = 20
@@ -68,21 +63,21 @@ dist_line_less = lambda x1, y1, x2, y2, x0, y0, d: abs((y2 - y1) * x0 - (x2 - x1
 
 
 def sendMarkers(topic, msg):
-	#publish.single(topic, json.dumps(msg), hostname=hostName, auth={'username' : mqtt_login, 'password': mqtt_pwd})
-  client.publish(topic, json.dumps(msg))
+    # publish.single(topic, json.dumps(msg), hostname=hostName, auth={'username' : mqtt_login, 'password': mqtt_pwd})
+    client.publish(topic, json.dumps(msg))
 
 
 def angles_from_rvec(rvec):
     r_mat, _jacobian = cv2.Rodrigues(rvec)
     a = math.atan2(r_mat[2][1], r_mat[2][2])
-    b = math.atan2(-r_mat[2][0], math.sqrt(math.pow(r_mat[2][1],2) + math.pow(r_mat[2][2],2)))
+    b = math.atan2(-r_mat[2][0], math.sqrt(math.pow(r_mat[2][1], 2) + math.pow(r_mat[2][2], 2)))
     c = math.atan2(r_mat[1][0], r_mat[0][0])
-    return [a,b,c]
+    return [a, b, c]
 
 
 def calc_heading(rvec):
     angles = angles_from_rvec(rvec)
-    degree_angle =  math.degrees(angles[2])
+    degree_angle = math.degrees(angles[2])
     if degree_angle < 0:
         degree_angle = 360 + degree_angle
     return degree_angle
@@ -93,50 +88,54 @@ def find_markers(frame, show=False):
 
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(gray, DICTIONARY, parameters=PARAMETERS)
     if show:
-    	cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-    # rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(corners, MARKER_EDGE, ac.CAMERA_MATRIX, ac.DIST_COEFFS)
+    # rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(corners, MARKER_EDGE, ac.CAMERA_MATRIX,
+    # ac.DIST_COEFFS)
     return corners, ids
 
 
-kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT,(6, 6)) 
+kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (6, 6))
 kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 
+
 def find_ball(frame, corners, imgBig, show=False):
-	global kernel_close, kernel_open, previousCircle, image_number
-	blank_image = np.zeros((ac.height,ac.width,1), np.uint8)
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-	dst = cv2.morphologyEx(cv2.Canny(gray, 100, 100), cv2.MORPH_CLOSE, kernel_close)
-	dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel_open)
-	blank_image[dst > 0.05 * dst.max()] = 255
-	# mask = cv2.medianBlur(blank_image, 3)
-	mask = blank_image
-	rows = mask.shape[0]
-	if len(corners) > 0:
-		for i in range(len(corners)):
-			pts = np.array([[
-				[corners[i][0][0][0], corners[i][0][0][1]],
-				[corners[i][0][1][0], corners[i][0][1][1]],
-				[corners[i][0][2][0], corners[i][0][2][1]],
-				[corners[i][0][3][0], corners[i][0][3][1]],
-				]], np.int32)
-			cv2.fillPoly(mask, [pts], (0, 0, 0))
-	circles = None
-	circles = cv2.HoughCircles(mask.copy(), cv2.HOUGH_GRADIENT, 1, rows/8, param1=50, param2=7, minRadius=2, maxRadius=15)
-	cv2.imshow("mask", mask)
-	scaleRatio = 1280 // ac.width
-	if circles is not None:
-		circles = np.uint16(np.around(circles))
-		i_ = 0
-		for circle in circles[0, :]:
-			if show:
-				cv2.circle(frame, (circle[0], circle[1]), 1, (0, 100, 100), 3)
-				cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 255), 3)
-			# return circle
-		return circles[0, :]
-		# print(circles)
-		
-	return ()	
+    global kernel_close, kernel_open, previousCircle, image_number
+    blank_image = np.zeros((ac.height, ac.width, 1), np.uint8)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    dst = cv2.morphologyEx(cv2.Canny(gray, 100, 100), cv2.MORPH_CLOSE, kernel_close)
+    dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel_open)
+    blank_image[dst > 0.05 * dst.max()] = 255
+    # mask = cv2.medianBlur(blank_image, 3)
+    mask = blank_image
+    rows = mask.shape[0]
+    if len(corners) > 0:
+        for i in range(len(corners)):
+            pts = np.array([[
+                [corners[i][0][0][0], corners[i][0][0][1]],
+                [corners[i][0][1][0], corners[i][0][1][1]],
+                [corners[i][0][2][0], corners[i][0][2][1]],
+                [corners[i][0][3][0], corners[i][0][3][1]],
+            ]], np.int32)
+            cv2.fillPoly(mask, [pts], (0, 0, 0))
+    circles = None
+    circles = cv2.HoughCircles(mask.copy(), cv2.HOUGH_GRADIENT, 1, rows / 8, param1=50, param2=7, minRadius=2,
+                               maxRadius=15)
+    cv2.imshow("mask", mask)
+    scaleRatio = 1280 // ac.width
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        i_ = 0
+        for circle in circles[0, :]:
+            if show:
+                cv2.circle(frame, (circle[0], circle[1]), 1, (0, 100, 100), 3)
+                cv2.circle(frame, (circle[0], circle[1]), circle[2], (255, 0, 255), 3)
+        # return circle
+        return circles[0, :]
+    # print(circles)
+
+    return ()
+
 
 def check_point(x, y):
     found = False
@@ -169,6 +168,7 @@ def draw(img):
             cv2.putText(cdstP, str(crossPoint[3]), (round(crossPoint[0] * 2) + 3, round(crossPoint[1] * 2)),
                         font, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.imshow("lines", cdstP)
+
 
 def findLines(img):
     global kernel
@@ -223,8 +223,8 @@ def findLines(img):
     # draw(img)
 
     # lines = []
-    lines = {'camId' : ac.camId, 
-    	'lines' : []}
+    lines = {'camId': ac.camId,
+             'lines': []}
     crossPoints_ = crossPoints.copy()
     for baseCoordinate in baseCoordinates['points']:
         okPoints = []
@@ -238,7 +238,7 @@ def findLines(img):
                 okPointsDelta.append((d1_ + d2_) / 2)
                 crossPoints_.remove(crossPoint)
         if len(okPointsDelta) > 0:
-        	lines['lines'].append(okPoints[okPointsDelta.index(min(okPointsDelta))])
+            lines['lines'].append(okPoints[okPointsDelta.index(min(okPointsDelta))])
     try:
         client.publish("MIPT-SportRoboticsClub/LunokhodFootball/PitchLines", json.dumps(lines))
     except TypeError:
@@ -246,76 +246,77 @@ def findLines(img):
 
 
 def capture():
+    os.system(cmd)
 
-	os.system(cmd)
+    if ac.showFrame:
+        print("Show")
+        cv2.namedWindow("input")
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FPS, ac.framerate)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    print("Frame Rate: ", frame_rate)
+    print("Height: ", height)
+    print("Width: ", width)
+    time.sleep(2.0)
 
-	if ac.showFrame:
-		print("Show")
-		cv2.namedWindow("input")
-	cap = cv2.VideoCapture(0)
-	cap.set(cv2.CAP_PROP_FPS, ac.framerate)
-	cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-	cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-	frame_rate = cap.get(cv2.CAP_PROP_FPS)
-	width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-	height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-	print("Frame Rate: ", frame_rate)
-	print("Height: ", height)
-	print("Width: ", width)
-	time.sleep(2.0)
-
-	logging.info("Start capturing from pi camera.")
-	try:
-		frame_num = 0
-		time1 = 0
-		time2 = 0
-		while True:
-			frame_num += 1
-			print("FPS:", 1/(time.time() - time1))
-			time1 = time.time()
-			ret, imgBig = cap.read()
-			img = cv2.resize(imgBig, (ac.width, ac.height), interpolation=cv2.INTER_AREA)
-			corners, ids = find_markers(img.copy(), ac.showFrame)
-			jsonMarkers = """{
-			"markers":[""" + "{},"*(len(corners)-1) + "{}" + """],
+    logging.info("Start capturing from pi camera.")
+    try:
+        frame_num = 0
+        time1 = 0
+        time2 = 0
+        while True:
+            frame_num += 1
+            print("FPS:", 1 / (time.time() - time1))
+            time1 = time.time()
+            ret, imgBig = cap.read()
+            img = cv2.resize(imgBig, (ac.width, ac.height), interpolation=cv2.INTER_AREA)
+            corners, ids = find_markers(img.copy(), ac.showFrame)
+            jsonMarkers = """{
+			"markers":[""" + "{}," * (len(corners) - 1) + "{}" + """],
 			"camId" : """ + str(ac.camId) + "}"
 
+            markers = json.loads(jsonMarkers)
+            markers['count'] = len(corners)
 
-			markers = json.loads(jsonMarkers)
-			markers['count'] = len(corners)
+            if len(corners) > 0:
+                for i in range(0, len(corners)):  # если найден хоть один маркер
+                    markers['markers'][i] = {'marker-id': int(ids[i][0]), 'camId': ac.camId,
+                                             'corners': {'1': {'x': float(corners[i][0][0][0]),
+                                                               'y': float(corners[i][0][0][1])},
+                                                         '2': {'x': float(corners[i][0][1][0]),
+                                                               'y': float(corners[i][0][1][1])},
+                                                         '3': {'x': float(corners[i][0][2][0]),
+                                                               'y': float(corners[i][0][2][1])},
+                                                         '4': {'x': float(corners[i][0][3][0]),
+                                                               'y': float(corners[i][0][3][1])}
+                                                         }}
+            sendMarkers(ac.topicRoot + ac.camId, markers)
+            # balls = find_ball(img, corners, imgBig, ac.showFrame)
+            # if len(balls) > 0:
+            #     ball = {'camId': ac.camId, 'ball': []}
+            #     for b in balls:
+            #         ball['ball'].append({'center': {'x': float(b[0]), 'y': float(b[1])}})
+            # else:
+            #     ball = {'camId': ac.camId, 'ball': 'None'}
+            # sendMarkers(ac.topicBall + ac.camId, ball)
+            if ac.showFrame:
+                cv2.imshow("input", img)
+            if frame_num % 12 == 0:
+                findLines(img)
+            key = cv2.waitKey(1)
+            if key == 27:
+                break
 
-			
+    except Exception as e:
+        logging.error("Capturing stopped with an error:" + str(e))
+    finally:
+        cv2.destroyAllWindows()
+        cv2.VideoCapture(0).release()
 
-			if len(corners) > 0:
-				for i in range(0, len(corners)): #если найден хоть один маркер
-					markers['markers'][i] = {'marker-id':int(ids[i][0]), 'camId' : ac.camId, 
-							'corners': {'1':{'x':float(corners[i][0][0][0]),'y':float(corners[i][0][0][1])},
-									'2':{'x':float(corners[i][0][1][0]),'y':float(corners[i][0][1][1])},
-									'3':{'x':float(corners[i][0][2][0]),'y':float(corners[i][0][2][1])},
-									'4':{'x':float(corners[i][0][3][0]),'y':float(corners[i][0][3][1])}
-								}}
-			sendMarkers(ac.topicRoot + ac.camId, markers)
-			balls = find_ball(img, corners, imgBig, ac.showFrame)
-			if len(balls) > 0:
-				ball = {'camId': ac.camId, 'ball': []}
-				for b in balls:
-					ball['ball'].append({'center' : {'x' : float(b[0]), 'y' : float(b[1])}})
-			else:
-				ball = {'camId': ac.camId, 'ball':'None'}
-			sendMarkers(ac.topicBall + ac.camId, ball)
-			if ac.showFrame:
-				cv2.imshow("input", img)
-			if frame_num % 12 == 0:
-				findLines(img)
-			key = cv2.waitKey(1)
-			if key == 27:
-				break
-
-	except Exception as e:
-		logging.error("Capturing stopped with an error:" + str(e))
-	finally:
-		cv2.destroyAllWindows()
-		cv2.VideoCapture(0).release()
 
 if __name__ == "__main__":
-	capture()
+    capture()
