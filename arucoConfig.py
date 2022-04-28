@@ -3,7 +3,7 @@
 import numpy as np
 
 
-camId = "01"
+camId = "1"
 topicRoot = "MIPT-SportRoboticsClub/LunokhodFootball/RawARUCO/"
 topicBall = "MIPT-SportRoboticsClub/LunokhodFootball/RawBALL/"
 hostName = "localhost"
@@ -13,7 +13,7 @@ showFrame = True
 
 width = 640
 height = 480
-framerate = 15
+framerate = 12
 
 autoExposure = 1 # 0 - auto | 1 - manual
 exposureTime = 40 # n * 1000 us
