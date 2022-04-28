@@ -3,7 +3,7 @@
 import numpy as np
 
 
-camId = "FootballCam-01"
+camId = "01"
 topicRoot = "MIPT-SportRoboticsClub/LunokhodFootball/RawARUCO/"
 topicBall = "MIPT-SportRoboticsClub/LunokhodFootball/RawBALL/"
 hostName = "localhost"
