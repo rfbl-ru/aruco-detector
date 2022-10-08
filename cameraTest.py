@@ -54,7 +54,7 @@ def main(argv):
         # print("markersTime:{}".format(time() - time1))
         # time1 = time()
 
-        balls, showImg = find_ball(img, corners, ac.showFrame)
+        balls, _, showImg = find_ball(img, showImg, corners, ac.showFrame)
         # # print("ballTime:{}".format(time() - time1))
         # # time1 = time()
 
