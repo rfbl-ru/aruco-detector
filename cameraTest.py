@@ -50,7 +50,7 @@ def main(argv):
         # print("capTime:{}".format(time() - time1))
         # time1 = time()
         
-        corners, ids, arucoImg = find_markers(img, arucoImg, ac.showFrame)
+        corners, ids, showImg = find_markers(img, showImg, ac.showFrame)
         # print("markersTime:{}".format(time() - time1))
         # time1 = time()
 
