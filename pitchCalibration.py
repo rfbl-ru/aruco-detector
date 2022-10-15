@@ -81,10 +81,11 @@ def calcPerspectiveMatrix(img):
 		isResult = True
 		cv2.imshow("out", out)
 		
-	return isResult, M
 	cv2.imshow("input", showImg)
 	# cv2.imwrite("input.jpg", showImg)
 	cv2.waitKey(1)
+	return isResult, M
+
 
 
 

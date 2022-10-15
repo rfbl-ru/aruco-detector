@@ -13,7 +13,7 @@ height = 480
 framerate = 6
 
 autoExposure = 1 # 0 - auto | 1 - manual
-exposureTime = 50 # n * 1000 us
+exposureTime = 40 # n * 1000 us
 brightness = 50
 
 

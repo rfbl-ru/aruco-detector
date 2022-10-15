@@ -64,7 +64,7 @@ def find_markers(frame, showImg, show=False):
 #     return result, frame
 
 
-def find_ball(frame, showImg, corners, show=False):
+def find_ball(frame, corners, show=False):
     kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     ballTime = time()
@@ -115,7 +115,7 @@ def find_ball(frame, showImg, corners, show=False):
 
                 if len(ballKeypoints) > 0:
                     if show:
-                        cv2.circle(showImg, (int(circle[0]), int(circle[1])), delta, (255, 0, 0), 2)
+                        cv2.circle(frame, (int(circle[0]), int(circle[1])), delta, (255, 0, 0), 2)
 
                     result.append((int(circle[0]), int(circle[1])))
                 # imageWithKeypoints = cv2.drawKeypoints(dst, keypoints, np.array([]), (255, 0, 0), 
@@ -131,7 +131,7 @@ def find_ball(frame, showImg, corners, show=False):
                 pass
     # print("candTime:{}".format(time() - ballTime))
     # ballTime = time()
-    return result, frame, showImg
+    return result, frame
 
 
 def calcArucoCenter(points):

@@ -33,12 +33,15 @@ def main(argv):
     print("Height: ", height)
     print("Width: ", width)
     M = None
-    # for i in range(100):
-    #     ret, img = cap.read()
-    #     isResult, M = calcPerspectiveMatrix(img)
-    #     if isResult:
-    #         print(M)
-    #         break
+    for i in range(100):
+        ret, img = cap.read()
+        isResult, M = calcPerspectiveMatrix(img)
+        if isResult:
+            print(M)
+            break
+    # if len(M) <= 0:
+    #     print("Can`t find corner markers!")
+    #     return 0
     
     img_number = 0
 
@@ -50,41 +53,59 @@ def main(argv):
         # print("capTime:{}".format(time() - time1))
         # time1 = time()
         
-        corners, ids, showImg = find_markers(img, showImg, ac.showFrame)
+        corners, ids, arucoImg = find_markers(img, arucoImg, ac.showFrame)
         # print("markersTime:{}".format(time() - time1))
         # time1 = time()
 
-        balls, _, showImg = find_ball(img, showImg, corners, ac.showFrame)
-        # # print("ballTime:{}".format(time() - time1))
-        # # time1 = time()
+        balls, showImg = find_ball(img, corners, ac.showFrame)
+        # print("ballTime:{}".format(time() - time1))
+        # time1 = time()
 
-        # ballAll = []
+        ballAll = []
+        cornersAll = []
+        for corner in corners:
+            cornerResult = []
+            for i in range(4):
+                cornerPts = np.float32([corner[0][i]])
+                cornerPts = np.array([cornerPts])
+            # print(corner[0][0])
+            # print(corner[0][0][0], corner[0][0][1])
+            # corner[0][0][0] = cv2.perspectiveTransform(corner[0][0][0], M)
+                cornerResult.append(cv2.perspectiveTransform(cornerPts, M))
+            # print(corner, cornerResult)
+            cornersAll.append(cornerResult)
 
-        # for ball in balls:
-        #     ballPts = np.float32([ball])
-        #     ballPts = np.array([ballPts])
+        for ball in balls:
+            ballPts = np.float32([ball])
+            ballPts = np.array([ballPts])
 
-        #     # ballResult = cv2.perspectiveTransform(ballPts, M)
-        #     # ballResult[1] = 283 - ballResult[1]
-        #     y = ballResult[0][0][1]
-        #     print(y)
-        #     if y < (L/2 - D/2):
-        #         w = 1
-        #     elif y > (L/2 + D/2):
-        #         w = 0
-        #     else:
-        #         if ac.camId == "1":
-        #             w = 1 - ((y - (L/2 - D/2))/D)
-        #         else:
-        #             w = (y - (L/2 - D/2))/D
-        #     ballResult[0][0][1] = ballResult[0][0][1]*w
-        #     # ballResult[0][0][1] = 
-        #     # print(ballResult)
-        #     ballAll.append(ballResult[0][0])
-        # # print(calcArucoCenter(cv2.perspectiveTransform(ball, M)))
+            ballResult = cv2.perspectiveTransform(ballPts, M)
+            # ballResult[1] = 283 - ballResult[1]
+            y = ballResult[0][0][1]
+            # print(y)
+            # if y < (L/2 - D/2):
+                # w = 1
+            # elif y > (L/2 + D/2):
+                # w = 0
+            # else:
+                # if ac.camId == "1":
+                    # w = 1 - ((y - (L/2 - D/2))/D)
+                # else:
+                    # w = (y - (L/2 - D/2))/D
+            # ballResult[0][0][1] = ballResult[0][0][1]*w
+            # ballResult[0][0][1] = 
+            # print(ballResult)
+            ballAll.append(ballResult[0][0])
+        # print(calcArucoCenter(cv2.perspectiveTransform(ball, M)))
         # print(list(ballAll))
-        # # sendMQTTData(balls, corners, ids)
-        # sendBallData(ballAll)
+        # print(cornersAll) 
+        # print(cornersAll[0][0][0][0][0])
+        # print(cornersAll[0][0][0][0][1])
+        # print(cornersAll[0][1][0][0][0])
+        # print(cornersAll[0][1][0][0][1])
+        sendMQTTData(cornersAll, ids)
+        if len(ballAll) <= 1:
+            sendBallData(ballAll)
         # print("Total time: {}".format(time() - time1))
         cv2.imshow("input", showImg)
         key = cv2.waitKey(1)
