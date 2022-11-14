@@ -1,20 +1,23 @@
 import numpy as np
 
-camId = "1"
+#Настройки mqtt
+camId = "2"
 topicRoot = "MIPT-SportRoboticsClub/LunokhodFootball/RawARUCO/"
 topicBall = "MIPT-SportRoboticsClub/LunokhodFootball/RawBALL/"
 hostName = "localhost"
-mqtt_login = "explorer"
-mqtt_pwd = "hnt67kl"
+mqtt_login = "login"
+mqtt_pwd = "pwd"
 showFrame = True
 
+#Настройки изображения с камеры
 width = 640
 height = 480
-framerate = 6
+framerate = 20
+linuxCameraNum = 0
 
 autoExposure = 1 # 0 - auto | 1 - manual
-exposureTime = 40 # n * 1000 us
-brightness = 50
+exposureTime = 20 # n * 1000 us
+brightness = 150
 
 
 # pi cam

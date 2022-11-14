@@ -31,13 +31,6 @@ def sendMQTTData(corners, ids):
 															   'y': float(corners[i][3][0][0][1])}
 														 }}
 	sendData(ac.topicRoot + ac.camId, markers)                                                    
-	# if len(ballData) > 0:
-	# 	ball = {'camId': ac.camId, 'ball': []}
-	# 	for b in ballData:
-	# 		ball['ball'].append({'center': {'x': float(b[0]), 'y': float(b[1])}})
-	# else:
-	# 	ball = {'camId': ac.camId, 'ball': 'None'}
-	# sendData(ac.topicBall + ac.camId, ball)
 
 def sendBallData(ballData):
 	if len(ballData) > 0:
