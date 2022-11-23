@@ -17,7 +17,7 @@ linuxCameraNum = 0
 
 autoExposure = 1 # 0 - auto | 1 - manual
 exposureTime = 20 # n * 1000 us
-brightness = 150
+brightness = 50
 
 
 # pi cam
