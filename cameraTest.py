@@ -15,11 +15,9 @@ pitchDelta = 5
 
 def main(argv):
     #capture from camera at location 0
-    cmd = "v4l2-ctl --device /dev/video{0} --set-ctrl=exposure_auto={1} --set-ctrl=exposure_absolute={2} --set-ctrl=brightness=200 "
-    cmd = cmd.format(ac.linuxCameraNum, ac.autoExposure, ac.exposureTime)
+    cmd = "v4l2-ctl --device /dev/video{0} --set-ctrl=auto_exposure={1} --set-ctrl=exposure_time_absolute={2} --set-ctrl=brightness={3}"
+    cmd = cmd.format(ac.linuxCameraNum, ac.autoExposure, ac.exposureTime, ac.brightness)
     os.system(cmd)
-    sleep(1)
-    os.system("v4l2-ctl --device /dev/video{0} --set-ctrl=brightness={1}".format(ac.linuxCameraNum, ac.brightness))
     cv2.namedWindow("input")
     cap = cv2.VideoCapture(ac.linuxCameraNum)
     
