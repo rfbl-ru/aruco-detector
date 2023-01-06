@@ -1,6 +1,6 @@
 import cv2
 
-#Candidate Blob detector
+# Candidate Blob detector
 
 params = cv2.SimpleBlobDetector_Params()
 
@@ -25,7 +25,6 @@ params.filterByInertia = True
 params.minInertiaRatio = 0.5
 
 detector = cv2.SimpleBlobDetector_create(params)
-
 
 # ball blob detector
 
@@ -53,9 +52,7 @@ ballParams.minInertiaRatio = 0.5
 
 ballDetector = cv2.SimpleBlobDetector_create(ballParams)
 
-
-#Aruco Markers params
+# Aruco Markers params
 
 DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
 PARAMETERS = cv2.aruco.DetectorParameters_create()
-

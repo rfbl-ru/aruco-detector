@@ -1,8 +1,8 @@
-import cv2
 import numpy as np
 from cameraParams import *
 from time import time
 import arucoConfig as ac
+
 
 def find_markers(frame, showImg, show=False):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -32,10 +32,8 @@ def find_ball(frame, corners, show=False):
 
     rows = blankImage.shape[0]
 
-
-
     # Закрашиваем aruco метки, чтобы они не попадали под кандидаты в мячи
-    if len(corners) > 0: 
+    if len(corners) > 0:
         for i in range(len(corners)):
             pts = np.array([[
                 [corners[i][0][0][0], corners[i][0][0][1]],
@@ -47,18 +45,18 @@ def find_ball(frame, corners, show=False):
 
     # Ищем круги по контурам при помощи HoughCircles. Отбор кандидатов.
     circles = None
-    circles = cv2.HoughCircles(blankImage.copy(), cv2.HOUGH_GRADIENT, 1, rows / 8, param1=100, param2=1, minRadius=1, maxRadius=4)
+    circles = cv2.HoughCircles(blankImage.copy(), cv2.HOUGH_GRADIENT, 1, rows / 8, param1=100, param2=1, minRadius=1,
+                               maxRadius=4)
     result = []
-
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
         # Для каждого кандидата считаем количество "блобов". В зависимости от их кол-ва и наличия, отбрасываем или приниаем кандидата. 
         for circle in circles[0, :]:
             try:
-                delta = round(float(circle[2])*2)
+                delta = round(float(circle[2]) * 2)
                 ballImage = frame[int(circle[1]) - delta:int(circle[1]) + delta,
-                        int(circle[0]) - delta:int(circle[0]) + delta]
+                            int(circle[0]) - delta:int(circle[0]) + delta]
                 ballImage = cv2.resize(ballImage, (48, 48))
                 ballKeypoints = ballDetector.detect(ballImage)
 
@@ -67,8 +65,6 @@ def find_ball(frame, corners, show=False):
                         cv2.circle(frame, (int(circle[0]), int(circle[1])), delta, (255, 0, 0), 2)
 
                     result.append((int(circle[0]), int(circle[1])))
-
-                
             except Exception as e:
                 pass
 
@@ -82,5 +78,4 @@ def calcArucoCenter(points):
     _x = sum(_x_list) / _len
     _y = sum(_y_list) / _len
 
-    return (_x, _y)
-
+    return _x, _y

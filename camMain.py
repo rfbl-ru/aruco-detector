@@ -1,30 +1,27 @@
 from __future__ import print_function
-import sys
-import cv2
-# import time
-import os
-import numpy as np
-from cameraFunctions import *
-from mqttFunctions import *
-import arucoConfig as ac
-from pitchCalibration import *
+
 from time import sleep
+from mqttFunctions import *
+from pitchCalibration import *
+import os
+import sys
 
 pitchDelta = 5
 
 
 def main(argv):
-    #capture from camera at location 0
-    cmd = "v4l2-ctl --device /dev/video{0} --set-ctrl=exposure_auto={1} --set-ctrl=exposure_absolute={2} --set-ctrl=brightness=200 "
+    # capture from camera at location 0
+    cmd = "v4l2-ctl --device /dev/video{0} --set-ctrl=exposure_auto={1} --set-ctrl=exposure_absolute={2} " \
+          "--set-ctrl=brightness=200"
     cmd = cmd.format(ac.linuxCameraNum, ac.autoExposure, ac.exposureTime)
     os.system(cmd)
     sleep(1)
     os.system("v4l2-ctl --device /dev/video{0} --set-ctrl=brightness={1}".format(ac.linuxCameraNum, ac.brightness))
     cv2.namedWindow("input")
     cap = cv2.VideoCapture(ac.linuxCameraNum)
-    
-    cap.set( cv2.CAP_PROP_FRAME_HEIGHT, ac.height )
-    cap.set( cv2.CAP_PROP_FRAME_WIDTH, ac.width )
+
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, ac.height)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, ac.width)
     cap.set(cv2.CAP_PROP_FPS, ac.framerate)
     frame_rate = cap.get(cv2.CAP_PROP_FPS)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -43,15 +40,10 @@ def main(argv):
     if not isResult:
         print("Can`t find corner markers!")
         return 0
-    
-    img_number = 0
 
-
-    # TODO: Протестировать! 
     cornerMax = 0
     cornerMin = 10000
     pitchIds = [0, 1, 2, 3]
-
 
     for i in range(4):
         _sum = pitchCorners[i][0] + pitchCorners[i][1]
@@ -97,8 +89,6 @@ def main(argv):
         showImg = img.copy()
         arucoImg = img.copy()
 
-
-        
         corners, ids, arucoImg = find_markers(img, arucoImg, ac.showFrame)
 
         balls, showImg = find_ball(img, corners, ac.showFrame)
@@ -126,10 +116,11 @@ def main(argv):
         cv2.imshow("input", showImg)
         key = cv2.waitKey(1)
         if key == 27:
-            break 
+            break
 
     cv2.destroyAllWindows()
     cap.release()
 
+
 if __name__ == '__main__':
-    main(sys.argv) 
+    main(sys.argv)
